@@ -10,6 +10,7 @@ use \Comodojo\Foundation\Base\Configuration;
 use \Comodojo\Exception\InstallerException;
 use \Comodojo\Installer\Components\InstallerDriverManager;
 use \Comodojo\Foundation\Utils\ArrayOps;
+use React\Promise\PromiseInterface;
 
 /**
  * @package     Comodojo Framework
@@ -34,14 +35,14 @@ class Installer extends LibraryInstaller {
     protected $supported_packages;
 
     protected $drivers = [];
-
+    
     public function __construct(
         IOInterface $io,
         Composer $composer,
         Configuration $configuration,
         InstallerConfiguration $installer_configuration
     ) {
-
+        
         $this->supported_packages = $installer_configuration->getPackageTypes();
 
         $extra = $installer_configuration->getPackageExtra();
@@ -63,15 +64,30 @@ class Installer extends LibraryInstaller {
         return in_array($packageType, $this->supported_packages);
 
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public function install(InstalledRepositoryInterface $repo, PackageInterface $package) {
+        
+        $installPackage = function() use ($package) {
 
-        parent::install($repo, $package);
+            $this->packageInstall($package);
+        
+        };
+        
+        // Composer v2 return a promise
+        $promise = parent::install($repo, $package);
 
-        $this->packageInstall($package);
+        if ($promise instanceof PromiseInterface) {
+            
+            return $promise->then($installPackage);
+
+        }
+
+        $installPackage();
+
+        return null;
 
     }
 
@@ -80,10 +96,25 @@ class Installer extends LibraryInstaller {
      */
     public function update(InstalledRepositoryInterface $repo, PackageInterface $initial, PackageInterface $target) {
 
-        parent::update($repo, $initial, $target);
+        $updatePackage = function() use ($initial, $target) {
 
-        $this->packageUpdate($initial, $target);
+            $this->packageUpdate($initial, $target);
+        
+        };
+        
+        // Composer v2 return a promise
+        $promise = parent::update($repo, $initial, $target);
 
+        if ($promise instanceof PromiseInterface) {
+            
+            return $promise->then($updatePackage);
+
+        }
+
+        $updatePackage();
+
+        return null;
+        
     }
 
     /**
@@ -91,10 +122,25 @@ class Installer extends LibraryInstaller {
      */
     public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package) {
 
-        $this->packageUninstall($package);
+        $uninstallPackage = function() use ($package) {
 
-        parent::uninstall($repo, $package);
+            $this->packageUninstall($package);
+        
+        };
+        
+        // Composer v2 return a promise
+        $promise = parent::uninstall($repo, $package);
 
+        if ($promise instanceof PromiseInterface) {
+            
+            return $promise->then($uninstallPackage);
+
+        }
+
+        $uninstallPackage();
+
+        return null;        
+        
     }
 
     private function packageInstall($package) {

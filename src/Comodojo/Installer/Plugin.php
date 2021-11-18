@@ -32,7 +32,21 @@ class Plugin implements PluginInterface, EventSubscriberInterface {
     protected $comodojo_configuration;
 
     protected $comodojo_configuration_persistence;
-
+    
+    /**
+    * {@inheritDoc}
+    */
+    public function deactivate(Composer $composer, IOInterface $io){
+    
+    }
+    
+    /**
+    * {@inheritDoc}
+    */
+    public function uninstall(Composer $composer, IOInterface $io){
+    
+    }
+    
     public function activate(Composer $composer, IOInterface $io) {
 
         // First, get current extra field and init a valid installer configuration
@@ -56,10 +70,11 @@ class Plugin implements PluginInterface, EventSubscriberInterface {
 
     public static function getSubscribedEvents() {
 
-        return ['post-create-project-cmd' => 'startPostInstallScript'];
-
+        return ['post-create-project-cmd' => 'startPostInstallScript'];        
+    
     }
 
+    
     public function startPostInstallScript(Event $event) {
 
         $script = $this->installer_configuration->getPostInstallScript();
